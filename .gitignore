@@ -128,7 +128,6 @@ ENV/
 env.bak/
 venv.bak/
 myenv/
-.idea/
 media/
 
 # Spyder project settings

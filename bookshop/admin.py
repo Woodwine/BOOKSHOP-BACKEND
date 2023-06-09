@@ -18,7 +18,7 @@ class PublishingAdmin(admin.ModelAdmin):
 class BookAdmin(admin.ModelAdmin):
     list_display = ['title', 'author', 'publishing', 'publication_date', 'price']
     search_fields = ['title', 'publishing__name', 'author__name', 'author__surname']
-    list_filter = ['publishing__name', 'author__surname', 'publication_date']
+    list_filter = ['publishing__name', 'publication_date']
 
 
 @admin.register(Order)
