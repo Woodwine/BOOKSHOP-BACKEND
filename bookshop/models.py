@@ -1,9 +1,12 @@
 from django.contrib.auth.models import User
 from django.db import models
-from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
+from django.core.validators import MinValueValidator, RegexValidator
 
 
 class InStockManager(models.Manager):
+    """
+    Getting a queryset of books in stock.
+    """
     def get_queryset(self):
         return super().get_queryset().filter(count_in_stock__gt=0)
 

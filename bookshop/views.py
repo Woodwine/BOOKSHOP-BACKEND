@@ -1,20 +1,24 @@
 from django.contrib.auth.models import User
-from rest_framework import filters, status
+from rest_framework import filters, status, mixins
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.generics import RetrieveUpdateAPIView
-from rest_framework.permissions import IsAdminUser, IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import ModelViewSet, GenericViewSet
 
-from .models import Book, Publishing, Author, Order, DeliveryAddress, OrderedBook
+from .models import Book, Publishing, Author, Order, DeliveryAddress, OrderedBook, Comments
 from .serializers import PublishingDetailSerializer, AuthorDetailSerializer, BookListSerializer, BookDetailSerializer, \
-    OrderDetailSerializer, OrderListSerializer, CustomerDetailSerializer, CustomerListSerializer
-from .permissions import IsAdminUserOrReadOnly, IsOwner, IsOrderOwner
+    OrderDetailSerializer, OrderListSerializer, CustomerDetailSerializer, CustomerListSerializer, \
+    CommentCreateSerializer
+from .permissions import IsAdminUserOrReadOnly, IsOwner, IsOrderOwner, IsCommentOwner
 from .service import BookFilter
 
 
 class PublishingViewSet(ModelViewSet):
+    """
+    Presentation of publishing houses and the books they have published.
+    """
     queryset = Publishing.objects.all()
     permission_classes = (IsAdminUserOrReadOnly,)
     serializer_class = PublishingDetailSerializer
@@ -23,6 +27,9 @@ class PublishingViewSet(ModelViewSet):
 
 
 class AuthorViewSet(ModelViewSet):
+    """
+    Presentation of writers and the books they have written.
+    """
     queryset = Author.objects.all()
     permission_classes = (IsAdminUserOrReadOnly,)
     serializer_class = AuthorDetailSerializer
@@ -31,7 +38,10 @@ class AuthorViewSet(ModelViewSet):
 
 
 class BookViewSet(ModelViewSet):
-    queryset = Book.objects.all()
+    """
+    Presentation of all the books that are available.
+    """
+    queryset = Book.in_stock_objects.all()
     permission_classes = (IsAdminUserOrReadOnly,)
     filter_backends = [filters.OrderingFilter, filters.SearchFilter, DjangoFilterBackend]
     ordering_fields = ['price', 'publication_date']
@@ -39,14 +49,16 @@ class BookViewSet(ModelViewSet):
     filterset_class = BookFilter
 
     def get_serializer_class(self):
-        if self.action == 'list':
+        if self.action in ['list', 'post']:
             return BookListSerializer
-        # if self.action == 'retrieve':
         else:
             return BookDetailSerializer
 
 
 class OrderViewSet(ModelViewSet):
+    """
+    Presentation of all customer orders.
+    """
     permission_classes = (IsOrderOwner,)
     filter_backends = [filters.OrderingFilter, filters.SearchFilter, DjangoFilterBackend]
     ordering_fields = ['order_date', 'is_paid', 'status', 'total_cost']
@@ -65,9 +77,23 @@ class OrderViewSet(ModelViewSet):
             return OrderDetailSerializer
 
 
+def get_costs(total_cost):
+    """
+    Calculation of the delivery cost and the total cost of the order.
+    """
+    shipping_cost = 0
+    if total_cost <= 2000:
+        shipping_cost = 300
+        total_cost += shipping_cost
+    return shipping_cost, total_cost
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def add_ordered_books(request):
+    """
+    Adding a new order.
+    """
     user = request.user
     data = request.data
 
@@ -83,7 +109,8 @@ def add_ordered_books(request):
         address=data['delivery_address'],
         phone_number=data['phone_number']
     )
-    total_cost = 0
+
+    cost = 0
 
     for item in ordered_books:
         book = Book.objects.get(id=item['book'])
@@ -93,22 +120,41 @@ def add_ordered_books(request):
             price=book.price,
             order=order,
         )
-        total_cost += new_ord_book.price * new_ord_book.quantity
+        cost += new_ord_book.price * new_ord_book.quantity
         book.count_in_stock -= new_ord_book.quantity
         book.save()
-    if total_cost > 2000:
-        order.total_cost = total_cost
-    else:
-        shipping_cost = 300
-        order.total_cost = total_cost + shipping_cost
-        order.shipping_cost = shipping_cost
+
+    order.shipping_cost, order.total_cost = get_costs(cost)
     order.save()
     serializer = OrderDetailSerializer(order)
     return Response(serializer.data)
 
 
+class CommentAPIView(mixins.RetrieveModelMixin,
+                     mixins.CreateModelMixin, mixins.UpdateModelMixin,
+                     mixins.DestroyModelMixin, GenericViewSet):
+    """
+    Creating, updating and deleting user comments.
+    """
+    permission_classes = [IsCommentOwner]
+    serializer_class = CommentCreateSerializer
+    queryset = Comments.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        data['comment_author'] = request.user.id
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+
 class UserViewSet(ModelViewSet):
-    permission_classes = (IsAdminUser, )
+    """
+    Getting user information for staff.
+    """
+    permission_classes = (IsAdminUser,)
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
     ordering_fields = ['username', 'last_name']
     queryset = User.objects.all()
@@ -121,10 +167,12 @@ class UserViewSet(ModelViewSet):
 
 
 class UserProfileViewSet(RetrieveUpdateAPIView):
-    permission_classes = (IsOwner, )
+    """
+    Getting user information.
+    """
+    permission_classes = (IsOwner,)
     serializer_class = CustomerDetailSerializer
 
     def get_object(self):
         if self.request.user.is_authenticated and not self.request.user.is_staff:
             return User.objects.get(id=self.request.user.id)
-

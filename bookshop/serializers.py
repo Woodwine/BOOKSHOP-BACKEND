@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from .models import Book, Author, Publishing, Order, OrderedBook, Comments, DeliveryAddress
+from .models import Book, Author, Publishing, Order, OrderedBook, Comments
 
 
 class BookListSerializer(serializers.ModelSerializer):
@@ -11,15 +11,24 @@ class BookListSerializer(serializers.ModelSerializer):
         depth = 1
 
 
+class CommentCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comments
+        fields = '__all__'
+
+
 class CommentListSerializer(serializers.ModelSerializer):
+    date = serializers.DateTimeField(format='%d/%m/%y %H:%M', read_only=True)
     comment_author = serializers.StringRelatedField()
 
     class Meta:
         model = Comments
-        fields = ['id', 'comment_author', 'rating', 'comment', 'date']
+        fields = ['comment_author', 'rating', 'comment', 'date']
 
 
 class BookDetailSerializer(serializers.ModelSerializer):
+    author = serializers.StringRelatedField()
+    publishing = serializers.StringRelatedField()
     book_comments = CommentListSerializer(many=True)
 
     class Meta:
@@ -53,15 +62,18 @@ class OrderedBookSerializer(serializers.ModelSerializer):
 
 
 class OrderListSerializer(serializers.ModelSerializer):
+    order_date = serializers.DateTimeField(format='%d/%m/%y %H:%M', read_only=True)
+
     class Meta:
         model = Order
         fields = ['id', 'customer', 'order_date', 'status', 'is_paid', 'total_cost']
 
 
 class OrderDetailSerializer(serializers.ModelSerializer):
+    order_date = serializers.DateTimeField(format='%d/%m/%Y %H:%M', read_only=True)
     ord_books = OrderedBookSerializer(many=True, read_only=True)
     delivery_address = serializers.StringRelatedField(many=True, read_only=True)
-    delivery_date = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
+    delivery_date = serializers.DateTimeField(format='%d/%m/%y %H:%M')
 
     class Meta:
         model = Order

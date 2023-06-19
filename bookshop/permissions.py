@@ -2,6 +2,7 @@ from rest_framework import permissions
 
 
 class IsAdminUserOrReadOnly(permissions.BasePermission):
+
     def has_permission(self, request, view):
         if request.method in permissions.SAFE_METHODS:
             return True
@@ -14,6 +15,7 @@ class IsAdminUserOrReadOnly(permissions.BasePermission):
 
 
 class IsOwner(permissions.BasePermission):
+
     def has_permission(self, request, view):
         if request.user.is_authenticated:
             return True
@@ -36,3 +38,15 @@ class IsOrderOwner(permissions.BasePermission):
             return True
         if request.user == obj.customer and request.method in permissions.SAFE_METHODS:
             return True
+
+
+class IsCommentOwner(permissions.BasePermission):
+
+    def has_permission(self, request, view):
+        if request.user.is_authenticated:
+            return True
+
+    def has_object_permission(self, request, view, obj):
+        if obj.comment_author == request.user or request.user.is_staff:
+            return True
+
