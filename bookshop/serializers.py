@@ -7,7 +7,7 @@ from .models import Book, Author, Publishing, Order, OrderedBook, Comments, Deli
 class BookListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Book
-        fields = ['id', 'title', 'image', 'author', 'price']
+        fields = ['id', 'title', 'image', 'price']
         depth = 1
 
 
@@ -45,36 +45,39 @@ class PublishingDetailSerializer(serializers.ModelSerializer):
 
 
 class OrderedBookSerializer(serializers.ModelSerializer):
+    book_image = serializers.ImageField(source='ord_book.image')
+
     class Meta:
         model = OrderedBook
-        fields = ['id', 'ordered_book__title', 'ordered_book__image', 'price', 'quantity']
-
-    def create(self, validated_data):
-        pass
+        fields = ['id', 'ord_book', 'book_image', 'price', 'quantity']
 
 
 class OrderListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ['id', 'customer', 'order_date', 'status', 'is_paid', 'total_cost']
-        depth = 1
 
 
 class OrderDetailSerializer(serializers.ModelSerializer):
-    ordered_books = OrderedBookSerializer(many=True, read_only=True)
-    order_address = serializers.StringRelatedField()
-    delivery_date = serializers.DateField(format='%d.%m.%Y',
-                                          input_formats=['%d.%m.%Y'])
+    ord_books = OrderedBookSerializer(many=True, read_only=True)
+    delivery_address = serializers.StringRelatedField(many=True, read_only=True)
+    delivery_date = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
 
     class Meta:
         model = Order
-        fields = ['id', 'ordered_book', 'customer', 'order_date', 'status', 'is_paid',
-                  'delivery_date', 'shipping_cost', 'total_cost', 'order_address']
+        fields = ['id', 'customer', 'order_date', 'status', 'is_paid',
+                  'delivery_date', 'shipping_cost', 'total_cost', 'delivery_address', 'ord_books']
 
 
-class UserSerializer(serializers.ModelSerializer):
+class CustomerListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'first_name', 'last_name', 'email']
+
+
+class CustomerDetailSerializer(serializers.ModelSerializer):
     customer_orders = OrderListSerializer(many=True, read_only=True)
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'lsat_name', 'email', 'customer_orders']
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'customer_orders']

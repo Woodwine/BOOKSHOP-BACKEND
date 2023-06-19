@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 # Register your models here.
-from .models import Author, Publishing, Book, Order, Comments
+from .models import Author, Publishing, Book, Order, Comments, DeliveryAddress, OrderedBook
 
 
 @admin.register(Author)
@@ -16,14 +16,27 @@ class PublishingAdmin(admin.ModelAdmin):
 
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
-    list_display = ['title', 'author', 'publishing', 'publication_date', 'price']
+    list_display = ['title', 'author', 'publishing', 'publication_date', 'price', 'count_in_stock']
     search_fields = ['title', 'publishing__name', 'author__name', 'author__surname']
     list_filter = ['publishing__name', 'publication_date']
 
 
+@admin.register(DeliveryAddress)
+class DeliveryAddressAdmin(admin.ModelAdmin):
+    list_display = ['order', 'address', 'phone_number']
+    search_fields = ['order']
+
+
+@admin.register(OrderedBook)
+class OrderedBookAdmin(admin.ModelAdmin):
+    list_display = ['order', 'ord_book', 'quantity', 'price']
+    search_fields = ['order', 'ord_book']
+
+
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    search_fields = ['customer__name', 'ordered_book__title', 'status']
+    list_display = ['customer', 'order_date', 'status', 'is_paid', 'shipping_cost', 'total_cost']
+    search_fields = ['customer', 'ordered_book__title', 'status']
     list_filter = ['status']
 
 

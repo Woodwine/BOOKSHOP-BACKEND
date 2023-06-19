@@ -1,16 +1,16 @@
 from django.contrib.auth.models import User
-from rest_framework import generics, viewsets, mixins, filters, status
+from rest_framework import filters, status
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.generics import GenericAPIView
+from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
-from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
+from rest_framework.viewsets import ModelViewSet
 
 from .models import Book, Publishing, Author, Order, DeliveryAddress, OrderedBook
 from .serializers import PublishingDetailSerializer, AuthorDetailSerializer, BookListSerializer, BookDetailSerializer, \
-    OrderDetailSerializer, OrderListSerializer, UserSerializer
-from .permissions import IsAdminUserOrReadOnly, IsOwner
+    OrderDetailSerializer, OrderListSerializer, CustomerDetailSerializer, CustomerListSerializer
+from .permissions import IsAdminUserOrReadOnly, IsOwner, IsOrderOwner
 from .service import BookFilter
 
 
@@ -41,12 +41,13 @@ class BookViewSet(ModelViewSet):
     def get_serializer_class(self):
         if self.action == 'list':
             return BookListSerializer
-        if self.action == 'retrieve':
+        # if self.action == 'retrieve':
+        else:
             return BookDetailSerializer
 
 
 class OrderViewSet(ModelViewSet):
-    permission_classes = (IsAdminUserOrReadOnly,)
+    permission_classes = (IsOrderOwner,)
     filter_backends = [filters.OrderingFilter, filters.SearchFilter, DjangoFilterBackend]
     ordering_fields = ['order_date', 'is_paid', 'status', 'total_cost']
     search_fields = ['customer__surname', 'status']
@@ -65,7 +66,7 @@ class OrderViewSet(ModelViewSet):
 
 
 @api_view(['POST'])
-@permission_classes(['IsAuthenticated'])
+@permission_classes([IsAuthenticated])
 def add_ordered_books(request):
     user = request.user
     data = request.data
@@ -75,41 +76,55 @@ def add_ordered_books(request):
         return Response({'detail': 'Товар не выбран'}, status=status.HTTP_400_BAD_REQUEST)
 
     order = Order.objects.create(
-        customer=user,
-        shipping_cost=data['shipping_cost'],
-        total_cost=data['total_cost']
+        customer=user
     )
-
-    order_address = DeliveryAddress.objects.create(
+    DeliveryAddress.objects.create(
         order=order,
-        address=data['order_address'],
+        address=data['delivery_address'],
         phone_number=data['phone_number']
     )
+    total_cost = 0
+
     for item in ordered_books:
         book = Book.objects.get(id=item['book'])
         new_ord_book = OrderedBook.objects.create(
             ord_book=book,
-            name=book.title,
-            image=book.image.url,
             quantity=item['quantity'],
-            price=item['price'],
+            price=book.price,
             order=order,
         )
+        total_cost += new_ord_book.price * new_ord_book.quantity
         book.count_in_stock -= new_ord_book.quantity
         book.save()
-    serializer = OrderDetailSerializer(order, many=True)
+    if total_cost > 2000:
+        order.total_cost = total_cost
+    else:
+        shipping_cost = 300
+        order.total_cost = total_cost + shipping_cost
+        order.shipping_cost = shipping_cost
+    order.save()
+    serializer = OrderDetailSerializer(order)
     return Response(serializer.data)
 
 
 class UserViewSet(ModelViewSet):
-    permission_classes = (IsOwner, )
-    serializer_class = UserSerializer
+    permission_classes = (IsAdminUser, )
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
     ordering_fields = ['username', 'last_name']
+    queryset = User.objects.all()
 
-    def get_queryset(self):
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return CustomerListSerializer
+        else:
+            return CustomerDetailSerializer
+
+
+class UserProfileViewSet(RetrieveUpdateAPIView):
+    permission_classes = (IsOwner, )
+    serializer_class = CustomerDetailSerializer
+
+    def get_object(self):
         if self.request.user.is_authenticated and not self.request.user.is_staff:
             return User.objects.get(id=self.request.user.id)
-        if self.request.user.is_staff:
-            return User.objects.all()
 
