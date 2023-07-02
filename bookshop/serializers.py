@@ -1,13 +1,24 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import Book, Author, Publishing, Order, OrderedBook, Comments
 
 
 class BookListSerializer(serializers.ModelSerializer):
+    rating = serializers.SerializerMethodField()
+    reviews = serializers.SerializerMethodField()
+
+    def get_rating(self, instance):
+        return instance.rating
+
+    def get_reviews(self, instance):
+        return instance.reviews
+
     class Meta:
         model = Book
-        fields = ['id', 'title', 'image', 'price']
+        fields = ['id', 'title', 'image', 'price', 'rating', 'reviews']
         depth = 1
 
 
@@ -23,17 +34,26 @@ class CommentListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comments
-        fields = ['comment_author', 'rating', 'comment', 'date']
+        fields = ['id', 'comment_author', 'rating', 'comment', 'date']
 
 
 class BookDetailSerializer(serializers.ModelSerializer):
     author = serializers.StringRelatedField()
     publishing = serializers.StringRelatedField()
     book_comments = CommentListSerializer(many=True)
+    rating = serializers.SerializerMethodField()
+    reviews = serializers.SerializerMethodField()
+
+    def get_rating(self, instance):
+        return instance.rating
+
+    def get_reviews(self, instance):
+        return instance.reviews
 
     class Meta:
         model = Book
-        fields = ['id', 'title', 'image', 'author', 'publishing', 'description', 'price', 'book_comments']
+        fields = ['id', 'title', 'rating', 'reviews', 'image', 'author', 'publishing', 'description', 'price',
+                  'book_comments', 'publication_date', 'count_in_stock']
         depth = 1
 
 
@@ -81,15 +101,43 @@ class OrderDetailSerializer(serializers.ModelSerializer):
                   'delivery_date', 'shipping_cost', 'total_cost', 'delivery_address', 'ord_books']
 
 
-class CustomerListSerializer(serializers.ModelSerializer):
+class CustomerSerializer(serializers.ModelSerializer):
+    is_admin = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'email']
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'is_admin']
+
+    def get_is_admin(self, instance):
+        return instance.is_staff
 
 
-class CustomerDetailSerializer(serializers.ModelSerializer):
+class CustomerDetailSerializer(CustomerSerializer):
     customer_orders = OrderListSerializer(many=True, read_only=True)
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'customer_orders']
+        fields = ['id', 'username', 'first_name', 'last_name', 'email',  'is_admin', 'customer_orders']
+
+
+class CustomerSerializerWithToken(CustomerSerializer):
+    token = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'first_name', 'last_name', 'email',  'is_admin', 'token']
+
+    def get_token(self, instance):
+        token = RefreshToken.for_user(instance)
+        return str(token)
+
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        serializer = CustomerSerializerWithToken(self.user).data
+
+        for key, value in serializer.items():
+            data[key] = value
+
+        return data

@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
-from django.core.validators import MinValueValidator, RegexValidator
+from django.core.validators import MinValueValidator, RegexValidator, MaxValueValidator
 
 
 class InStockManager(models.Manager):
@@ -96,7 +96,7 @@ class OrderedBook(models.Model):
         ordering = ('-order',)
 
     def __str__(self):
-        return f'{self.name}'
+        return self.ord_book
 
 
 class DeliveryAddress(models.Model):

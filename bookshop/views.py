@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.db.models import Avg, Count
 from rest_framework import filters, status, mixins
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import api_view, permission_classes
@@ -6,13 +7,19 @@ from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
+from django.contrib.auth.hashers import make_password
 
 from .models import Book, Publishing, Author, Order, DeliveryAddress, OrderedBook, Comments
 from .serializers import PublishingDetailSerializer, AuthorDetailSerializer, BookListSerializer, BookDetailSerializer, \
-    OrderDetailSerializer, OrderListSerializer, CustomerDetailSerializer, CustomerListSerializer, \
-    CommentCreateSerializer
+    OrderDetailSerializer, OrderListSerializer, CommentCreateSerializer, MyTokenObtainPairSerializer, CustomerDetailSerializer, \
+    CustomerSerializer
 from .permissions import IsAdminUserOrReadOnly, IsOwner, IsOrderOwner, IsCommentOwner
 from .service import BookFilter
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
 
 
 class PublishingViewSet(ModelViewSet):
@@ -41,7 +48,8 @@ class BookViewSet(ModelViewSet):
     """
     Presentation of all the books that are available.
     """
-    queryset = Book.in_stock_objects.all()
+    queryset = Book.in_stock_objects.all().annotate(rating=Avg('book_comments__rating')).annotate(
+        reviews=Count('book_comments__comment'))
     permission_classes = (IsAdminUserOrReadOnly,)
     filter_backends = [filters.OrderingFilter, filters.SearchFilter, DjangoFilterBackend]
     ordering_fields = ['price', 'publication_date']
@@ -161,7 +169,7 @@ class UserViewSet(ModelViewSet):
 
     def get_serializer_class(self):
         if self.action == 'list':
-            return CustomerListSerializer
+            return CustomerSerializer
         else:
             return CustomerDetailSerializer
 
@@ -176,3 +184,20 @@ class UserProfileViewSet(RetrieveUpdateAPIView):
     def get_object(self):
         if self.request.user.is_authenticated and not self.request.user.is_staff:
             return User.objects.get(id=self.request.user.id)
+
+#
+# @api_view(['POST'])
+# def register_user(request):
+#     data = request.data
+#
+#     user = User.objects.create_user(
+#         username=data['username'],
+#         first_name=data['first_name'],
+#         last_name=data['last_name'],
+#         email=data['email'],
+#         password=make_password(data['password'])
+#     )
+#
+#     serializer = UserSerializerWithToken(user, many=False)
+#
+#     return Response(serializer.data)
