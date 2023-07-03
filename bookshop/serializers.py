@@ -129,7 +129,7 @@ class CustomerSerializerWithToken(CustomerSerializer):
 
     def get_token(self, instance):
         token = RefreshToken.for_user(instance)
-        return str(token)
+        return str(token.access_token)
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
