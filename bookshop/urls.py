@@ -10,9 +10,9 @@ router.register(r'authors', views.AuthorViewSet)
 router.register(r'orders', views.OrderViewSet, basename='order')
 router.register(r'users', views.UserViewSet, basename='users')
 router.register(r'comment', views.CommentAPIView)
+router.register(r'profile', views.UserProfileViewSet, basename='profile')
 
 urlpatterns = [
     path('', include(router.urls)),
     path('add-order/', views.add_ordered_books, name='add-order'),
-    path('profile/', views.UserProfileViewSet.as_view(), name='profile'),
 ]

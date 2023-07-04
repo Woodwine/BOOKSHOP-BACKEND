@@ -11,8 +11,9 @@ from django.contrib.auth.hashers import make_password
 
 from .models import Book, Publishing, Author, Order, DeliveryAddress, OrderedBook, Comments
 from .serializers import PublishingDetailSerializer, AuthorDetailSerializer, BookListSerializer, BookDetailSerializer, \
-    OrderDetailSerializer, OrderListSerializer, CommentCreateSerializer, MyTokenObtainPairSerializer, CustomerDetailSerializer, \
-    CustomerSerializer
+    OrderDetailSerializer, OrderListSerializer, CommentCreateSerializer, MyTokenObtainPairSerializer, \
+    CustomerDetailSerializer, \
+    CustomerSerializer, CustomerSerializerWithToken
 from .permissions import IsAdminUserOrReadOnly, IsOwner, IsOrderOwner, IsCommentOwner
 from .service import BookFilter
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -174,30 +175,21 @@ class UserViewSet(ModelViewSet):
             return CustomerDetailSerializer
 
 
-class UserProfileViewSet(RetrieveUpdateAPIView):
+class UserProfileViewSet(mixins.RetrieveModelMixin,
+                         mixins.UpdateModelMixin,
+                         GenericViewSet):
     """
     Getting user information.
     """
     permission_classes = (IsOwner,)
-    serializer_class = CustomerDetailSerializer
 
     def get_object(self):
-        if self.request.user.is_authenticated and not self.request.user.is_staff:
-            return User.objects.get(id=self.request.user.id)
+        user_id = self.request.user.id
+        return User.objects.get(id=user_id)
 
-#
-# @api_view(['POST'])
-# def register_user(request):
-#     data = request.data
-#
-#     user = User.objects.create_user(
-#         username=data['username'],
-#         first_name=data['first_name'],
-#         last_name=data['last_name'],
-#         email=data['email'],
-#         password=make_password(data['password'])
-#     )
-#
-#     serializer = UserSerializerWithToken(user, many=False)
-#
-#     return Response(serializer.data)
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return CustomerDetailSerializer
+        elif self.action in ['update', 'partial_update']:
+            return CustomerSerializerWithToken
+
