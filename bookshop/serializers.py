@@ -3,7 +3,7 @@ from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import Book, Author, Publishing, Order, OrderedBook, Comments
+from .models import Book, Author, Publishing, Order, OrderedBook, Comments, DeliveryAddress
 
 
 class BookListSerializer(serializers.ModelSerializer):
@@ -81,6 +81,13 @@ class OrderedBookSerializer(serializers.ModelSerializer):
         fields = ['id', 'ord_book', 'book_image', 'price', 'quantity']
 
 
+class DeliveryAddressSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = DeliveryAddress
+        fields = ['address', 'phone_number']
+
+
 class OrderListSerializer(serializers.ModelSerializer):
     order_date = serializers.DateTimeField(format='%d/%m/%y %H:%M', read_only=True)
 
@@ -92,12 +99,12 @@ class OrderListSerializer(serializers.ModelSerializer):
 class OrderDetailSerializer(serializers.ModelSerializer):
     order_date = serializers.DateTimeField(format='%d/%m/%Y %H:%M', read_only=True)
     ord_books = OrderedBookSerializer(many=True, read_only=True)
-    delivery_address = serializers.StringRelatedField(many=True, read_only=True)
+    delivery_address = DeliveryAddressSerializer(read_only=True)
     delivery_date = serializers.DateTimeField(format='%d/%m/%y %H:%M')
 
     class Meta:
         model = Order
-        fields = ['id', 'customer', 'order_date', 'status', 'is_paid',
+        fields = ['id', 'customer', 'order_date', 'status', 'is_paid', 'payment_method',
                   'delivery_date', 'shipping_cost', 'total_cost', 'delivery_address', 'ord_books']
 
 

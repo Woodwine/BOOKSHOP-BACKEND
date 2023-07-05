@@ -64,7 +64,10 @@ class BookViewSet(ModelViewSet):
             return BookDetailSerializer
 
 
-class OrderViewSet(ModelViewSet):
+class OrderViewSet(mixins.RetrieveModelMixin,
+                   mixins.UpdateModelMixin,
+                   mixins.ListModelMixin,
+                   GenericViewSet):
     """
     Presentation of all customer orders.
     """
@@ -86,17 +89,6 @@ class OrderViewSet(ModelViewSet):
             return OrderDetailSerializer
 
 
-def get_costs(total_cost):
-    """
-    Calculation of the delivery cost and the total cost of the order.
-    """
-    shipping_cost = 0
-    if total_cost <= 2000:
-        shipping_cost = 300
-        total_cost += shipping_cost
-    return shipping_cost, total_cost
-
-
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def add_ordered_books(request):
@@ -105,36 +97,36 @@ def add_ordered_books(request):
     """
     user = request.user
     data = request.data
+    shipping_address = data['shippingAddress']
+    ordered_books = data['orderItems']
 
-    ordered_books = data['ordered_books']
     if ordered_books and len(ordered_books) == 0:
         return Response({'detail': 'Товар не выбран'}, status=status.HTTP_400_BAD_REQUEST)
 
     order = Order.objects.create(
-        customer=user
-    )
-    DeliveryAddress.objects.create(
-        order=order,
-        address=data['delivery_address'],
-        phone_number=data['phone_number']
+        customer=user,
+        shipping_cost=data['shippingPrice'],
+        total_cost=data['totalPrice'],
+        payment_method=data['paymentMethod']
     )
 
-    cost = 0
+    DeliveryAddress.objects.create(
+        order=order,
+        address=shipping_address['address'],
+        phone_number=shipping_address['phone_number'],
+    )
 
     for item in ordered_books:
         book = Book.objects.get(id=item['book'])
         new_ord_book = OrderedBook.objects.create(
             ord_book=book,
             quantity=item['quantity'],
-            price=book.price,
+            price=item['price'],
             order=order,
         )
-        cost += new_ord_book.price * new_ord_book.quantity
         book.count_in_stock -= new_ord_book.quantity
         book.save()
 
-    order.shipping_cost, order.total_cost = get_costs(cost)
-    order.save()
     serializer = OrderDetailSerializer(order)
     return Response(serializer.data)
 
@@ -182,6 +174,7 @@ class UserProfileViewSet(mixins.RetrieveModelMixin,
     Getting user information.
     """
     permission_classes = (IsOwner,)
+    queryset = User.objects.all()
 
     def get_object(self):
         user_id = self.request.user.id

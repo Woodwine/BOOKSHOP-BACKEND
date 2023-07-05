@@ -73,6 +73,7 @@ class Order(models.Model):
     delivery_date = models.DateField(blank=True, null=True, verbose_name='Дата доставки')
     shipping_cost = models.DecimalField(max_digits=7, decimal_places=2, default=0, verbose_name='Цена доставки')
     total_cost = models.DecimalField(max_digits=7, decimal_places=2, default=0, verbose_name='Цена заказа с учетом доставки')
+    payment_method = models.CharField(default='PayPal', verbose_name='Способ оплаты')
 
     class Meta:
         verbose_name = 'Заказ'
@@ -96,7 +97,7 @@ class OrderedBook(models.Model):
         ordering = ('-order',)
 
     def __str__(self):
-        return self.ord_book
+        return self.ord_book.title
 
 
 class DeliveryAddress(models.Model):

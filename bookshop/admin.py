@@ -35,7 +35,7 @@ class OrderedBookAdmin(admin.ModelAdmin):
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     list_display = ['customer', 'order_date', 'status', 'is_paid', 'shipping_cost', 'total_cost']
-    search_fields = ['customer', 'ordered_book__title', 'status']
+    search_fields = ['customer', 'status']
     list_filter = ['status']
 
 
