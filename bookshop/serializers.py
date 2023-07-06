@@ -75,10 +75,14 @@ class PublishingDetailSerializer(serializers.ModelSerializer):
 
 class OrderedBookSerializer(serializers.ModelSerializer):
     book_image = serializers.ImageField(source='ord_book.image')
+    title = serializers.SerializerMethodField()
 
     class Meta:
         model = OrderedBook
-        fields = ['id', 'ord_book', 'book_image', 'price', 'quantity']
+        fields = ['id', 'title', 'ord_book', 'book_image', 'price', 'quantity']
+
+    def get_title(self, instance):
+        return instance.ord_book.title
 
 
 class DeliveryAddressSerializer(serializers.ModelSerializer):
@@ -86,26 +90,6 @@ class DeliveryAddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeliveryAddress
         fields = ['address', 'phone_number']
-
-
-class OrderListSerializer(serializers.ModelSerializer):
-    order_date = serializers.DateTimeField(format='%d/%m/%y %H:%M', read_only=True)
-
-    class Meta:
-        model = Order
-        fields = ['id', 'customer', 'order_date', 'status', 'is_paid', 'total_cost']
-
-
-class OrderDetailSerializer(serializers.ModelSerializer):
-    order_date = serializers.DateTimeField(format='%d/%m/%Y %H:%M', read_only=True)
-    ord_books = OrderedBookSerializer(many=True, read_only=True)
-    delivery_address = DeliveryAddressSerializer(read_only=True)
-    delivery_date = serializers.DateTimeField(format='%d/%m/%y %H:%M')
-
-    class Meta:
-        model = Order
-        fields = ['id', 'customer', 'order_date', 'status', 'is_paid', 'payment_method',
-                  'delivery_date', 'shipping_cost', 'total_cost', 'delivery_address', 'ord_books']
 
 
 class CustomerSerializer(serializers.ModelSerializer):
@@ -117,6 +101,30 @@ class CustomerSerializer(serializers.ModelSerializer):
 
     def get_is_admin(self, instance):
         return instance.is_staff
+
+
+class OrderListSerializer(serializers.ModelSerializer):
+    customer = CustomerSerializer()
+    order_date = serializers.DateTimeField(format='%d/%m/%y %H:%M', read_only=True)
+    pay_date = serializers.DateTimeField(format='%d/%m/%y %H:%M', read_only=True)
+
+    class Meta:
+        model = Order
+        fields = ['id', 'customer', 'order_date', 'pay_date', 'status', 'is_paid', 'total_cost']
+
+
+class OrderDetailSerializer(serializers.ModelSerializer):
+    customer = CustomerSerializer()
+    order_date = serializers.DateTimeField(format='%d/%m/%Y %H:%M', read_only=True)
+    ord_books = OrderedBookSerializer(many=True, read_only=True)
+    delivery_address = DeliveryAddressSerializer(many=True)
+    delivery_date = serializers.DateTimeField(format='%d/%m/%y %H:%M')
+    pay_date = serializers.DateTimeField(format='%d/%m/%y %H:%M', read_only=True)
+
+    class Meta:
+        model = Order
+        fields = ['id', 'customer', 'order_date', 'status', 'is_paid', 'pay_date', 'payment_method',
+                  'delivery_date', 'shipping_cost', 'total_cost', 'delivery_address', 'ord_books']
 
 
 class CustomerDetailSerializer(CustomerSerializer):
@@ -140,6 +148,7 @@ class CustomerSerializerWithToken(CustomerSerializer):
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+
     def validate(self, attrs):
         data = super().validate(attrs)
         serializer = CustomerSerializerWithToken(self.user).data

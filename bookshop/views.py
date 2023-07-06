@@ -3,11 +3,10 @@ from django.db.models import Avg, Count
 from rest_framework import filters, status, mixins
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
-from django.contrib.auth.hashers import make_password
+from datetime import datetime
 
 from .models import Book, Publishing, Author, Order, DeliveryAddress, OrderedBook, Comments
 from .serializers import PublishingDetailSerializer, AuthorDetailSerializer, BookListSerializer, BookDetailSerializer, \
@@ -127,6 +126,19 @@ def add_ordered_books(request):
         book.count_in_stock -= new_ord_book.quantity
         book.save()
 
+    serializer = OrderDetailSerializer(order)
+    print(serializer.data)
+    return Response(serializer.data)
+
+
+@api_view(['PUT'])
+@permission_classes([IsOwner])
+def update_order_to_pay(request, pk):
+    order = Order.objects.get(pk=pk)
+
+    order.is_paid = True
+    order.pay_date = datetime.now()
+    order.save()
     serializer = OrderDetailSerializer(order)
     return Response(serializer.data)
 

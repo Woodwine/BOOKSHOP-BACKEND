@@ -15,4 +15,5 @@ router.register(r'profile', views.UserProfileViewSet, basename='profile')
 urlpatterns = [
     path('', include(router.urls)),
     path('add-order/', views.add_ordered_books, name='add-order'),
+    path('pay/<str:pk>/', views.update_order_to_pay, name='pay-order'),
 ]
