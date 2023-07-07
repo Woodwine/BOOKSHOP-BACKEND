@@ -163,11 +163,27 @@ class CommentAPIView(mixins.RetrieveModelMixin,
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-class UserViewSet(ModelViewSet):
+# class UserViewSet(ModelViewSet):
+#     """
+#     Getting user information for staff.
+#     """
+#     permission_classes = (IsAdminUser,)
+#     filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
+#     ordering_fields = ['username', 'last_name']
+#     queryset = User.objects.all()
+#
+#     def get_serializer_class(self):
+#         if self.action == 'list':
+#             return CustomerSerializer
+#         else:
+#             return CustomerDetailSerializer
+
+
+class UserProfileViewSet(ModelViewSet):
     """
-    Getting user information for staff.
+    Getting user information.
     """
-    permission_classes = (IsAdminUser,)
+    permission_classes = (IsOwner,)
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
     ordering_fields = ['username', 'last_name']
     queryset = User.objects.all()
@@ -175,26 +191,8 @@ class UserViewSet(ModelViewSet):
     def get_serializer_class(self):
         if self.action == 'list':
             return CustomerSerializer
-        else:
-            return CustomerDetailSerializer
-
-
-class UserProfileViewSet(mixins.RetrieveModelMixin,
-                         mixins.UpdateModelMixin,
-                         GenericViewSet):
-    """
-    Getting user information.
-    """
-    permission_classes = (IsOwner,)
-    queryset = User.objects.all()
-
-    def get_object(self):
-        user_id = self.request.user.id
-        return User.objects.get(id=user_id)
-
-    def get_serializer_class(self):
-        if self.action == 'retrieve':
-            return CustomerDetailSerializer
         elif self.action in ['update', 'partial_update']:
             return CustomerSerializerWithToken
+        else:
+            return CustomerDetailSerializer
 

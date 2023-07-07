@@ -97,7 +97,7 @@ class CustomerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'is_admin']
+        fields = ['id', 'username', 'email', 'is_admin']
 
     def get_is_admin(self, instance):
         return instance.is_staff
@@ -128,11 +128,11 @@ class OrderDetailSerializer(serializers.ModelSerializer):
 
 
 class CustomerDetailSerializer(CustomerSerializer):
-    customer_orders = OrderListSerializer(many=True, read_only=True)
+    customer_orders = OrderListSerializer(many=True)
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'email',  'is_admin', 'customer_orders']
+        fields = ['id', 'username', 'email',  'is_admin', 'customer_orders']
 
 
 class CustomerSerializerWithToken(CustomerSerializer):
@@ -140,7 +140,7 @@ class CustomerSerializerWithToken(CustomerSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'email',  'is_admin', 'token']
+        fields = ['id', 'username', 'email',  'is_admin', 'token']
 
     def get_token(self, instance):
         token = RefreshToken.for_user(instance)
