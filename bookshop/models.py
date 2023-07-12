@@ -11,17 +11,17 @@ class InStockManager(models.Manager):
         return super().get_queryset().filter(count_in_stock__gt=0)
 
 
-class Author(models.Model):
-    name = models.CharField(max_length=50, verbose_name='Имя')
-    surname = models.CharField(max_length=50, verbose_name='Фамилия')
-
-    def __str__(self):
-        return f'{self.name} {self.surname}'
-
-    class Meta:
-        verbose_name = 'Автор'
-        verbose_name_plural = 'Авторы'
-        ordering = ('surname',)
+# class Author(models.Model):
+#     name = models.CharField(max_length=50, verbose_name='Имя')
+#     surname = models.CharField(max_length=50, verbose_name='Фамилия')
+#
+#     def __str__(self):
+#         return f'{self.name} {self.surname}'
+#
+#     class Meta:
+#         verbose_name = 'Автор'
+#         verbose_name_plural = 'Авторы'
+#         ordering = ('surname',)
 
 
 class Publishing(models.Model):
@@ -38,15 +38,15 @@ class Publishing(models.Model):
 
 class Book(models.Model):
     title = models.CharField(max_length=150, verbose_name='Название книги')
-    image = models.ImageField(upload_to='books/', verbose_name='Фотография книги')
-    author = models.ForeignKey(Author, related_name='author_books', on_delete=models.PROTECT, verbose_name='Автор')
-    publishing = models.ForeignKey(Publishing, related_name='publishing_books', blank=True, null=True,
+    image = models.ImageField(upload_to='books/', default='/media/books/default.jpg', verbose_name='Фотография книги')
+    author = models.CharField(default='', null=True, verbose_name='Автор')
+    publishing = models.ForeignKey(Publishing, related_name='publishing_books',
                                    on_delete=models.PROTECT, verbose_name='Издательство')
     publication_date = models.PositiveSmallIntegerField(validators=[MinValueValidator(1990)],
                                                         verbose_name='Год публикации')
     description = models.TextField(max_length=1000, verbose_name='Аннотация к книге')
-    price = models.DecimalField(max_digits=7, decimal_places=2, verbose_name='Цена')
-    count_in_stock = models.PositiveIntegerField(blank=True, null=True, verbose_name='Количество на складе')
+    price = models.DecimalField(max_digits=7, default=0, decimal_places=2, verbose_name='Цена')
+    count_in_stock = models.PositiveIntegerField(default=0, verbose_name='Количество на складе')
     objects = models.Manager()
     in_stock_objects = InStockManager()
 
@@ -56,7 +56,6 @@ class Book(models.Model):
     class Meta:
         verbose_name = 'Книга'
         verbose_name_plural = 'Книги'
-        ordering = ('title',)
 
 
 class Order(models.Model):

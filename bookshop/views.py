@@ -8,11 +8,11 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from datetime import datetime
 
-from .models import Book, Publishing, Author, Order, DeliveryAddress, OrderedBook, Comments
-from .serializers import PublishingDetailSerializer, AuthorDetailSerializer, BookListSerializer, BookDetailSerializer, \
+from .models import Book, Publishing, Order, DeliveryAddress, OrderedBook, Comments
+from .serializers import PublishingDetailSerializer, BookListSerializer, BookDetailSerializer, \
     OrderDetailSerializer, OrderListSerializer, CommentCreateSerializer, MyTokenObtainPairSerializer, \
     CustomerDetailSerializer, \
-    CustomerSerializer, CustomerSerializerWithToken
+    CustomerSerializer, CustomerSerializerWithToken, BookCreateSerializer
 from .permissions import IsAdminUserOrReadOnly, IsOwner, IsOrderOwner, IsCommentOwner
 from .service import BookFilter
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -33,34 +33,51 @@ class PublishingViewSet(ModelViewSet):
     search_fields = ['name']
 
 
-class AuthorViewSet(ModelViewSet):
-    """
-    Presentation of writers and the books they have written.
-    """
-    queryset = Author.objects.all()
-    permission_classes = (IsAdminUserOrReadOnly,)
-    serializer_class = AuthorDetailSerializer
-    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
-    search_fields = ['name', 'surname']
+# class AuthorViewSet(ModelViewSet):
+#     """
+#     Presentation of writers and the books they have written.
+#     """
+#     queryset = Author.objects.all()
+#     permission_classes = (IsAdminUserOrReadOnly,)
+#     serializer_class = AuthorDetailSerializer
+#     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
+#     search_fields = ['name', 'surname']
 
 
 class BookViewSet(ModelViewSet):
     """
     Presentation of all the books that are available.
     """
-    queryset = Book.in_stock_objects.all().annotate(rating=Avg('book_comments__rating')).annotate(
-        reviews=Count('book_comments__comment'))
+
     permission_classes = (IsAdminUserOrReadOnly,)
-    filter_backends = [filters.OrderingFilter, filters.SearchFilter, DjangoFilterBackend]
-    ordering_fields = ['price', 'publication_date']
-    search_fields = ['title', 'author__surname', 'publishing__name']
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
+    search_fields = ['title']
     filterset_class = BookFilter
 
     def get_serializer_class(self):
-        if self.action in ['list', 'post']:
+        if self.action in ['list']:
             return BookListSerializer
+        elif self.action in ['create', 'update', 'partial_update']:
+            return BookCreateSerializer
         else:
             return BookDetailSerializer
+
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            return Book.objects.all()
+        else:
+            return Book.in_stock_objects.all().annotate(rating=Avg('book_comments__rating')).annotate(reviews=Count('book_comments__comment'))
+
+
+@api_view(['POST'])
+def upload_image(request):
+    data = request.data
+    book_id = data['book_id']
+    book = Book.objects.get(id=book_id)
+    book.image = request.FILES.get('image')
+    book.save()
+    return Response('Фотография загружена')
+
 
 
 class OrderViewSet(mixins.RetrieveModelMixin,
@@ -185,7 +202,7 @@ class UserProfileViewSet(ModelViewSet):
     """
     permission_classes = (IsOwner,)
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
-    ordering_fields = ['username', 'last_name']
+    ordering_fields = ['username']
     queryset = User.objects.all()
 
     def get_serializer_class(self):

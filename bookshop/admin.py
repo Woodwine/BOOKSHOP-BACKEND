@@ -1,11 +1,11 @@
 from django.contrib import admin
 
-from .models import Author, Publishing, Book, Order, Comments, DeliveryAddress, OrderedBook
+from .models import Publishing, Book, Order, Comments, DeliveryAddress, OrderedBook
 
 
-@admin.register(Author)
-class AuthorAdmin(admin.ModelAdmin):
-    search_fields = ['surname']
+# @admin.register(Author)
+# class AuthorAdmin(admin.ModelAdmin):
+#     search_fields = ['surname']
 
 
 @admin.register(Publishing)
@@ -15,8 +15,8 @@ class PublishingAdmin(admin.ModelAdmin):
 
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
-    list_display = ['title', 'author', 'publishing', 'publication_date', 'price', 'count_in_stock']
-    search_fields = ['title', 'publishing__name', 'author__name', 'author__surname']
+    list_display = ['id', 'title', 'author', 'publishing', 'publication_date', 'price', 'count_in_stock']
+    search_fields = ['title', 'publishing__name', 'author']
     list_filter = ['publishing__name', 'publication_date']
 
 
@@ -34,7 +34,7 @@ class OrderedBookAdmin(admin.ModelAdmin):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ['customer', 'order_date', 'status', 'is_paid', 'shipping_cost', 'total_cost']
+    list_display = ['id', 'customer', 'order_date', 'status', 'is_paid', 'shipping_cost', 'total_cost']
     search_fields = ['customer', 'status']
     list_filter = ['status']
 

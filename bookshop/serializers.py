@@ -3,12 +3,12 @@ from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import Book, Author, Publishing, Order, OrderedBook, Comments, DeliveryAddress
+from .models import Book, Publishing, Order, OrderedBook, Comments, DeliveryAddress
 
 
 class BookListSerializer(serializers.ModelSerializer):
-    rating = serializers.SerializerMethodField()
-    reviews = serializers.SerializerMethodField()
+    rating = serializers.SerializerMethodField(read_only=True, required=None)
+    reviews = serializers.SerializerMethodField(read_only=True, required=None)
 
     def get_rating(self, instance):
         return instance.rating
@@ -19,7 +19,13 @@ class BookListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Book
         fields = ['id', 'title', 'image', 'price', 'rating', 'reviews']
-        depth = 1
+
+
+class BookCreateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Book
+        fields = ['id', 'title', 'image', 'author', 'publishing', 'publication_date', 'description', 'count_in_stock', 'price']
 
 
 class CommentCreateSerializer(serializers.ModelSerializer):
@@ -37,9 +43,14 @@ class CommentListSerializer(serializers.ModelSerializer):
         fields = ['id', 'comment_author', 'rating', 'comment', 'date']
 
 
+class PublishingDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Publishing
+        fields = ['id', 'name']
+
+
 class BookDetailSerializer(serializers.ModelSerializer):
-    author = serializers.StringRelatedField()
-    publishing = serializers.StringRelatedField()
+    publishing = PublishingDetailSerializer()
     book_comments = CommentListSerializer(many=True)
     rating = serializers.SerializerMethodField()
     reviews = serializers.SerializerMethodField()
@@ -57,20 +68,11 @@ class BookDetailSerializer(serializers.ModelSerializer):
         depth = 1
 
 
-class AuthorDetailSerializer(serializers.ModelSerializer):
-    author_books = BookListSerializer(many=True)
-
-    class Meta:
-        model = Author
-        fields = ['id', 'name', 'surname', 'author_books']
-
-
-class PublishingDetailSerializer(serializers.ModelSerializer):
-    publishing_books = BookListSerializer(many=True)
-
-    class Meta:
-        model = Publishing
-        fields = ['id', 'name', 'publishing_books']
+# class AuthorDetailSerializer(serializers.ModelSerializer):
+#
+#     class Meta:
+#         model = Author
+#         fields = ['id', 'name', 'surname']
 
 
 class OrderedBookSerializer(serializers.ModelSerializer):
