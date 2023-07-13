@@ -17,4 +17,5 @@ urlpatterns = [
     path('add-order/', views.add_ordered_books, name='add-order'),
     path('pay/<str:pk>/', views.update_order_to_pay, name='pay-order'),
     path('upload_image/', views.upload_image, name='upload-image'),
+    path('order_status/<str:pk>/', views.update_order_status, name='update-order-status'),
 ]

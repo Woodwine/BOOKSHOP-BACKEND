@@ -70,7 +70,7 @@ class Order(models.Model):
     status = models.CharField(choices=STATUS, default='В работе', verbose_name='Статус заказа')
     is_paid = models.BooleanField(default=False, verbose_name='Статус оплаты')
     pay_date = models.DateTimeField(null=True, blank=True, verbose_name='Дата оплаты')
-    delivery_date = models.DateField(blank=True, null=True, verbose_name='Дата доставки')
+    delivery_date = models.DateTimeField(blank=True, null=True, verbose_name='Дата доставки')
     shipping_cost = models.DecimalField(max_digits=7, decimal_places=2, default=0, verbose_name='Цена доставки')
     total_cost = models.DecimalField(max_digits=7, decimal_places=2, default=0, verbose_name='Цена заказа с учетом доставки')
     payment_method = models.CharField(default='PayPal', verbose_name='Способ оплаты')

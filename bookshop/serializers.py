@@ -65,7 +65,6 @@ class BookDetailSerializer(serializers.ModelSerializer):
         model = Book
         fields = ['id', 'title', 'rating', 'reviews', 'image', 'author', 'publishing', 'description', 'price',
                   'book_comments', 'publication_date', 'count_in_stock']
-        depth = 1
 
 
 # class AuthorDetailSerializer(serializers.ModelSerializer):
@@ -107,8 +106,8 @@ class CustomerSerializer(serializers.ModelSerializer):
 
 class OrderListSerializer(serializers.ModelSerializer):
     customer = CustomerSerializer()
-    order_date = serializers.DateTimeField(format='%d/%m/%y %H:%M', read_only=True)
-    pay_date = serializers.DateTimeField(format='%d/%m/%y %H:%M', read_only=True)
+    order_date = serializers.DateTimeField(format='%d/%m/%y', read_only=True)
+    pay_date = serializers.DateTimeField(format='%d/%m/%y', read_only=True)
 
     class Meta:
         model = Order
@@ -120,8 +119,8 @@ class OrderDetailSerializer(serializers.ModelSerializer):
     order_date = serializers.DateTimeField(format='%d/%m/%Y %H:%M', read_only=True)
     ord_books = OrderedBookSerializer(many=True, read_only=True)
     delivery_address = DeliveryAddressSerializer(many=True)
-    delivery_date = serializers.DateTimeField(format='%d/%m/%y %H:%M')
-    pay_date = serializers.DateTimeField(format='%d/%m/%y %H:%M', read_only=True)
+    delivery_date = serializers.DateTimeField(format='%d/%m/%y')
+    pay_date = serializers.DateTimeField(format='%d/%m/%y', read_only=True)
 
     class Meta:
         model = Order

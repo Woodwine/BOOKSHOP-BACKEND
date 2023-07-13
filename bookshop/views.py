@@ -6,7 +6,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
-from datetime import datetime
+from datetime import datetime, date
 
 from .models import Book, Publishing, Order, DeliveryAddress, OrderedBook, Comments
 from .serializers import PublishingDetailSerializer, BookListSerializer, BookDetailSerializer, \
@@ -31,17 +31,6 @@ class PublishingViewSet(ModelViewSet):
     serializer_class = PublishingDetailSerializer
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = ['name']
-
-
-# class AuthorViewSet(ModelViewSet):
-#     """
-#     Presentation of writers and the books they have written.
-#     """
-#     queryset = Author.objects.all()
-#     permission_classes = (IsAdminUserOrReadOnly,)
-#     serializer_class = AuthorDetailSerializer
-#     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
-#     search_fields = ['name', 'surname']
 
 
 class BookViewSet(ModelViewSet):
@@ -71,13 +60,14 @@ class BookViewSet(ModelViewSet):
 
 @api_view(['POST'])
 def upload_image(request):
+    print(request.FILES)
     data = request.data
     book_id = data['book_id']
     book = Book.objects.get(id=book_id)
+    print(book.image)
     book.image = request.FILES.get('image')
     book.save()
     return Response('Фотография загружена')
-
 
 
 class OrderViewSet(mixins.RetrieveModelMixin,
@@ -155,6 +145,21 @@ def update_order_to_pay(request, pk):
 
     order.is_paid = True
     order.pay_date = datetime.now()
+    order.save()
+    serializer = OrderDetailSerializer(order)
+    return Response(serializer.data)
+
+
+@api_view(['PUT'])
+@permission_classes([IsAdminUser])
+def update_order_status(request, pk):
+    data = request.data
+    order = Order.objects.get(pk=pk)
+
+    order.status = data
+    if order.status == 'Доставлен':
+        print(datetime.now().date())
+        order.delivery_date = datetime.now()
     order.save()
     serializer = OrderDetailSerializer(order)
     return Response(serializer.data)
