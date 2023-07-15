@@ -1,5 +1,5 @@
 from django.contrib.auth.models import User
-from django.db.models import Avg, Count
+from django.db.models import Avg, Count, Q
 from rest_framework import filters, status, mixins
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import api_view, permission_classes
@@ -52,10 +52,19 @@ class BookViewSet(ModelViewSet):
             return BookDetailSerializer
 
     def get_queryset(self):
+        query = self.request.query_params.get('keyword')
+        if query is None:
+            query = ''
         if self.request.user.is_staff:
-            return Book.objects.all()
+            return Book.objects.filter(Q(title__icontains=query.lower()) |
+                                       Q(title__icontains=query.upper()) |
+                                       Q(title__icontains=query.capitalize()))
         else:
-            return Book.in_stock_objects.all().annotate(rating=Avg('book_comments__rating')).annotate(reviews=Count('book_comments__comment'))
+            return Book.in_stock_objects.filter(Q(title__icontains=query.lower()) |
+                                                Q(title__icontains=query.upper()) |
+                                                Q(title__icontains=query.capitalize())).annotate(
+                rating=Avg('book_comments__rating')).annotate(
+                reviews=Count('book_comments__comment'))
 
 
 @api_view(['POST'])
