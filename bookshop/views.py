@@ -6,7 +6,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
-from datetime import datetime, date
+from datetime import datetime
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from .models import Book, Publishing, Order, DeliveryAddress, OrderedBook, Comments
 from .serializers import PublishingDetailSerializer, BookListSerializer, BookDetailSerializer, \
@@ -69,11 +70,9 @@ class BookViewSet(ModelViewSet):
 
 @api_view(['POST'])
 def upload_image(request):
-    print(request.FILES)
     data = request.data
     book_id = data['book_id']
     book = Book.objects.get(id=book_id)
-    print(book.image)
     book.image = request.FILES.get('image')
     book.save()
     return Response('Фотография загружена')
@@ -143,7 +142,6 @@ def add_ordered_books(request):
         book.save()
 
     serializer = OrderDetailSerializer(order)
-    print(serializer.data)
     return Response(serializer.data)
 
 
@@ -167,7 +165,6 @@ def update_order_status(request, pk):
 
     order.status = data
     if order.status == 'Доставлен':
-        print(datetime.now().date())
         order.delivery_date = datetime.now()
     order.save()
     serializer = OrderDetailSerializer(order)
