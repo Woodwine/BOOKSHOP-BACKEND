@@ -7,7 +7,6 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from datetime import datetime
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from .models import Book, Publishing, Order, DeliveryAddress, OrderedBook, Comments
 from .serializers import PublishingDetailSerializer, BookListSerializer, BookDetailSerializer, \
@@ -146,7 +145,7 @@ def add_ordered_books(request):
 
 
 @api_view(['PUT'])
-@permission_classes([IsOwner])
+@permission_classes([IsOrderOwner])
 def update_order_to_pay(request, pk):
     order = Order.objects.get(pk=pk)
 
@@ -191,22 +190,6 @@ class CommentAPIView(mixins.RetrieveModelMixin,
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-# class UserViewSet(ModelViewSet):
-#     """
-#     Getting user information for staff.
-#     """
-#     permission_classes = (IsAdminUser,)
-#     filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
-#     ordering_fields = ['username', 'last_name']
-#     queryset = User.objects.all()
-#
-#     def get_serializer_class(self):
-#         if self.action == 'list':
-#             return CustomerSerializer
-#         else:
-#             return CustomerDetailSerializer
-
-
 class UserProfileViewSet(ModelViewSet):
     """
     Getting user information.
@@ -214,13 +197,18 @@ class UserProfileViewSet(ModelViewSet):
     permission_classes = (IsOwner,)
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
     ordering_fields = ['username']
-    queryset = User.objects.all()
+
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            return User.objects.all()
+        elif self.request.user.is_authenticated:
+            return User.objects.filter(id=self.request.user.pk)
 
     def get_serializer_class(self):
         if self.action == 'list':
             return CustomerSerializer
         elif self.action in ['update', 'partial_update']:
             return CustomerSerializerWithToken
-        else:
+        elif self.request.user.is_authenticated:
             return CustomerDetailSerializer
 

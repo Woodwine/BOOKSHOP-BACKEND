@@ -163,6 +163,8 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.BrowsableAPIRenderer'
     ],
 
+    'TEST_REQUEST_DEFAULT_FORMAT': 'json',
+
     'TEST_REQUEST_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.MultiPartRenderer',

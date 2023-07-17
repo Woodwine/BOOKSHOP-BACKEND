@@ -11,19 +11,6 @@ class InStockManager(models.Manager):
         return super().get_queryset().filter(count_in_stock__gt=0)
 
 
-# class Author(models.Model):
-#     name = models.CharField(max_length=50, verbose_name='Имя')
-#     surname = models.CharField(max_length=50, verbose_name='Фамилия')
-#
-#     def __str__(self):
-#         return f'{self.name} {self.surname}'
-#
-#     class Meta:
-#         verbose_name = 'Автор'
-#         verbose_name_plural = 'Авторы'
-#         ordering = ('surname',)
-
-
 class Publishing(models.Model):
     name = models.CharField(max_length=50, verbose_name='Издательство')
 

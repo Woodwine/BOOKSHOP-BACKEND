@@ -6,11 +6,9 @@ from . import views
 router = routers.SimpleRouter()
 router.register(r'books', views.BookViewSet, basename='book')
 router.register(r'publishing-houses', views.PublishingViewSet)
-# router.register(r'authors', views.AuthorViewSet)
 router.register(r'orders', views.OrderViewSet, basename='order')
 router.register(r'users', views.UserProfileViewSet, basename='users')
 router.register(r'comment', views.CommentAPIView)
-# router.register(r'profile', views.UserProfileViewSet, basename='profile')
 
 urlpatterns = [
     path('', include(router.urls)),
