@@ -11,7 +11,6 @@ class BookListSerializer(serializers.ModelSerializer):
     Returns list of books consisting book id, book title, book image, book price, average rating, number of reviews
     """
 
-    image = serializers.SerializerMethodField()
     rating = serializers.SerializerMethodField(read_only=True, required=None)
     reviews = serializers.SerializerMethodField(read_only=True, required=None)
 
@@ -20,9 +19,6 @@ class BookListSerializer(serializers.ModelSerializer):
 
     def get_reviews(self, instance):
         return instance.reviews
-
-    def get_image(self, instance):
-        return instance.image.url
 
     class Meta:
         model = Book
@@ -80,7 +76,6 @@ class BookDetailSerializer(serializers.ModelSerializer):
     publication date, average rating, number of reviews, book comments, number of books in stock
     """
 
-    image = serializers.SerializerMethodField()
     publishing = PublishingDetailSerializer()
     book_comments = CommentListSerializer(many=True)
     rating = serializers.SerializerMethodField()
@@ -91,9 +86,6 @@ class BookDetailSerializer(serializers.ModelSerializer):
 
     def get_reviews(self, instance):
         return instance.reviews
-
-    def get_image(self, instance):
-        return instance.image.url
 
     class Meta:
         model = Book
