@@ -18,14 +18,11 @@ from .service import BookFilter
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 
-class MyTokenObtainPairView(TokenObtainPairView):
-    serializer_class = MyTokenObtainPairSerializer
-
-
 class PublishingViewSet(ModelViewSet):
     """
-    Presentation of publishing houses and the books they have published.
+    Represents a publishing house
     """
+
     queryset = Publishing.objects.all()
     permission_classes = (IsAdminUserOrReadOnly,)
     serializer_class = PublishingDetailSerializer
@@ -35,7 +32,7 @@ class PublishingViewSet(ModelViewSet):
 
 class BookViewSet(ModelViewSet):
     """
-    Presentation of all the books that are available.
+    Represents list of all books in stock or one book only. Be used also for creating and updating the book by staff.
     """
 
     permission_classes = (IsAdminUserOrReadOnly,)
@@ -69,6 +66,9 @@ class BookViewSet(ModelViewSet):
 
 @api_view(['POST'])
 def upload_image(request):
+    """
+    Uploads an image to the book item
+    """
     data = request.data
     book_id = data['book_id']
     book = Book.objects.get(id=book_id)
@@ -82,8 +82,9 @@ class OrderViewSet(mixins.RetrieveModelMixin,
                    mixins.ListModelMixin,
                    GenericViewSet):
     """
-    Presentation of all customer orders.
+    Represents list of all customer orders or one order. Be used also for updating the order by staff.
     """
+
     permission_classes = (IsOrderOwner,)
     filter_backends = [filters.OrderingFilter, filters.SearchFilter, DjangoFilterBackend]
     ordering_fields = ['order_date', 'is_paid', 'status', 'total_cost']
@@ -106,7 +107,7 @@ class OrderViewSet(mixins.RetrieveModelMixin,
 @permission_classes([IsAuthenticated])
 def add_ordered_books(request):
     """
-    Adding a new order.
+    Creates a new order, adds delivery address and ordered books
     """
     user = request.user
     data = request.data
@@ -147,6 +148,10 @@ def add_ordered_books(request):
 @api_view(['PUT'])
 @permission_classes([IsOrderOwner])
 def update_order_to_pay(request, pk):
+    """
+    Updates payment status of the order by order owner
+    """
+
     order = Order.objects.get(pk=pk)
 
     order.is_paid = True
@@ -159,6 +164,10 @@ def update_order_to_pay(request, pk):
 @api_view(['PUT'])
 @permission_classes([IsAdminUser])
 def update_order_status(request, pk):
+    """
+    Updates order status of the order by staff
+    """
+
     data = request.data
     order = Order.objects.get(pk=pk)
 
@@ -174,8 +183,10 @@ class CommentAPIView(mixins.RetrieveModelMixin,
                      mixins.CreateModelMixin, mixins.UpdateModelMixin,
                      mixins.DestroyModelMixin, GenericViewSet):
     """
-    Creating, updating and deleting user comments.
+    Represents list of all book comments or only one comment.
+    Be used also for creating, updating and deleting the comment
     """
+
     permission_classes = [IsCommentOwner]
     serializer_class = CommentCreateSerializer
     queryset = Comments.objects.all()
@@ -190,10 +201,16 @@ class CommentAPIView(mixins.RetrieveModelMixin,
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
+
+
 class UserProfileViewSet(ModelViewSet):
     """
-    Getting user information.
+    Represents list of all users or information about one user.
+    Be used also for updating user information by owner or staff
     """
+
     permission_classes = (IsOwner,)
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
     ordering_fields = ['username']

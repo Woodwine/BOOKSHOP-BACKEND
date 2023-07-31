@@ -7,6 +7,11 @@ from .models import Book, Publishing, Order, OrderedBook, Comments, DeliveryAddr
 
 
 class BookListSerializer(serializers.ModelSerializer):
+    """
+    Returns list of books consisting book id, book title, book image, book price, average rating, number of reviews
+    """
+
+    image = serializers.SerializerMethodField()
     rating = serializers.SerializerMethodField(read_only=True, required=None)
     reviews = serializers.SerializerMethodField(read_only=True, required=None)
 
@@ -16,25 +21,41 @@ class BookListSerializer(serializers.ModelSerializer):
     def get_reviews(self, instance):
         return instance.reviews
 
+    def get_image(self, instance):
+        return instance.image.url
+
     class Meta:
         model = Book
         fields = ['id', 'title', 'image', 'price', 'rating', 'reviews']
 
 
 class BookCreateSerializer(serializers.ModelSerializer):
+    """
+    Returns information about the created book consisting id, title, image, publishing, publication date, description,
+    number of books in stock, book price
+    """
 
     class Meta:
         model = Book
-        fields = ['id', 'title', 'image', 'author', 'publishing', 'publication_date', 'description', 'count_in_stock', 'price']
+        fields = ['id', 'title', 'image', 'author', 'publishing', 'publication_date', 'description',
+                  'count_in_stock', 'price']
 
 
 class CommentCreateSerializer(serializers.ModelSerializer):
+    """
+    Returns information about the created comment consisting id, commented book, book rating, comment author, comment, date of comment
+    """
+
     class Meta:
         model = Comments
         fields = '__all__'
 
 
 class CommentListSerializer(serializers.ModelSerializer):
+    """
+    Returns list of comments consisting id, comment author, book rating, comment, date of comment
+    """
+
     date = serializers.DateTimeField(format='%d/%m/%y %H:%M', read_only=True)
     comment_author = serializers.StringRelatedField()
 
@@ -44,12 +65,22 @@ class CommentListSerializer(serializers.ModelSerializer):
 
 
 class PublishingDetailSerializer(serializers.ModelSerializer):
+    """
+    Returns list of publishing houses consisting id, publishing name
+    """
+
     class Meta:
         model = Publishing
         fields = ['id', 'name']
 
 
 class BookDetailSerializer(serializers.ModelSerializer):
+    """
+    Returns information about the book consisting id, book title, image, author, publishing, description, book price,
+    publication date, average rating, number of reviews, book comments, number of books in stock
+    """
+
+    image = serializers.SerializerMethodField()
     publishing = PublishingDetailSerializer()
     book_comments = CommentListSerializer(many=True)
     rating = serializers.SerializerMethodField()
@@ -61,20 +92,20 @@ class BookDetailSerializer(serializers.ModelSerializer):
     def get_reviews(self, instance):
         return instance.reviews
 
+    def get_image(self, instance):
+        return instance.image.url
+
     class Meta:
         model = Book
         fields = ['id', 'title', 'rating', 'reviews', 'image', 'author', 'publishing', 'description', 'price',
                   'book_comments', 'publication_date', 'count_in_stock']
 
 
-# class AuthorDetailSerializer(serializers.ModelSerializer):
-#
-#     class Meta:
-#         model = Author
-#         fields = ['id', 'name', 'surname']
-
-
 class OrderedBookSerializer(serializers.ModelSerializer):
+    """
+    Returns list of ordered books consisting ordered book id, book, book title, image, price, quantity of books
+    """
+
     book_image = serializers.ImageField(source='ord_book.image')
     title = serializers.SerializerMethodField()
 
@@ -87,6 +118,9 @@ class OrderedBookSerializer(serializers.ModelSerializer):
 
 
 class DeliveryAddressSerializer(serializers.ModelSerializer):
+    """
+    Returns information about delivery address consisting address and customer phone number
+    """
 
     class Meta:
         model = DeliveryAddress
@@ -94,6 +128,10 @@ class DeliveryAddressSerializer(serializers.ModelSerializer):
 
 
 class CustomerSerializer(serializers.ModelSerializer):
+    """
+    Returns list of customers consisting user id, username, email, staff status
+    """
+
     is_admin = serializers.SerializerMethodField()
 
     class Meta:
@@ -105,6 +143,11 @@ class CustomerSerializer(serializers.ModelSerializer):
 
 
 class OrderListSerializer(serializers.ModelSerializer):
+    """
+    Returns list of orders consisting order id, customer, order date, payment date, order status,
+    payment status, total cost of the order
+    """
+
     customer = CustomerSerializer()
     order_date = serializers.DateTimeField(format='%d/%m/%y', read_only=True)
     pay_date = serializers.DateTimeField(format='%d/%m/%y', read_only=True)
@@ -115,6 +158,12 @@ class OrderListSerializer(serializers.ModelSerializer):
 
 
 class OrderDetailSerializer(serializers.ModelSerializer):
+    """
+    Returns information about the order consisting order id, customer, order date, order status, payment status,
+    payment date, payment method, delivery date, shipping cost, total cost of the order, delivery address,
+    ordered books
+    """
+
     customer = CustomerSerializer()
     order_date = serializers.DateTimeField(format='%d/%m/%Y %H:%M', read_only=True)
     ord_books = OrderedBookSerializer(many=True, read_only=True)
@@ -129,6 +178,10 @@ class OrderDetailSerializer(serializers.ModelSerializer):
 
 
 class CustomerDetailSerializer(CustomerSerializer):
+    """
+    Returns information about the customer consisting customer id, username, email, staff status, customer orders
+    """
+
     customer_orders = OrderListSerializer(many=True)
 
     class Meta:
@@ -137,6 +190,10 @@ class CustomerDetailSerializer(CustomerSerializer):
 
 
 class CustomerSerializerWithToken(CustomerSerializer):
+    """
+    Returns information about the customer consisting customer id, username, email, staff status, JWT token
+    """
+
     token = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -149,6 +206,9 @@ class CustomerSerializerWithToken(CustomerSerializer):
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """
+    Validates token pair
+    """
 
     def validate(self, attrs):
         data = super().validate(attrs)

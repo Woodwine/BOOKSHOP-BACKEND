@@ -7,7 +7,9 @@ from .models import Order, OrderedBook, Publishing, DeliveryAddress, Book
 
 
 class BookTests(APITestCase):
-
+    """
+    Tests book views and book serializers
+    """
     def setUp(self):
         self.user_test = User.objects.create(username='User_TEST', password='dina12345')
         self.user_test_token = AccessToken.for_user(self.user_test)
@@ -55,7 +57,7 @@ class BookTests(APITestCase):
         self.assertEquals(response.status_code, status.HTTP_200_OK)
         self.assertEquals(response.json().get('title'), 'Book1')
 
-    """"Create book"""
+    """Create book"""
 
     def test_fail_book_create(self):
         response = self.client.post(reverse('book-list'), self.data)
@@ -73,7 +75,9 @@ class BookTests(APITestCase):
 
 
 class OrderTests(APITestCase):
-
+    """
+    Tests order views and order serializers
+    """
     def setUp(self):
         self.user_test = User.objects.create(username='User_TEST', password='dina12345')
         self.user_test_token = AccessToken.for_user(self.user_test)
@@ -172,6 +176,9 @@ class OrderTests(APITestCase):
 
 
 class UserTests(APITestCase):
+    """
+    Tests user views and user serializers
+    """
 
     def setUp(self):
         self.user_test = User.objects.create(username='User_TEST', password='dina12345')
@@ -228,6 +235,9 @@ class UserTests(APITestCase):
 
 
 class PublishingTests(APITestCase):
+    """
+    Tests publishing views and publishing serializers
+    """
 
     def setUp(self):
         self.user_test = User.objects.create(username='User_TEST', password='dina12345')

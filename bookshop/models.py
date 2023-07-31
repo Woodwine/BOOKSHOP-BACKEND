@@ -5,13 +5,18 @@ from django.core.validators import MinValueValidator, RegexValidator, MaxValueVa
 
 class InStockManager(models.Manager):
     """
-    Getting a queryset of books in stock.
+    Returns a queryset of books in stock.
     """
+
     def get_queryset(self):
         return super().get_queryset().filter(count_in_stock__gt=0)
 
 
 class Publishing(models.Model):
+    """
+    Represents a publishing consisting publishing name
+    """
+
     name = models.CharField(max_length=50, verbose_name='Издательство')
 
     def __str__(self):
@@ -24,6 +29,11 @@ class Publishing(models.Model):
 
 
 class Book(models.Model):
+    """
+    Represents a book consisting book title, book image, book author, publishing, publication date,
+    description, book price, number of books in stock
+    """
+
     title = models.CharField(max_length=150, verbose_name='Название книги')
     image = models.ImageField(upload_to='books/', default='/media/books/default.jpg', verbose_name='Фотография книги')
     author = models.CharField(default='', null=True, verbose_name='Автор')
@@ -46,6 +56,11 @@ class Book(models.Model):
 
 
 class Order(models.Model):
+    """
+    Represents an order consisting customer, order date, status of order, payment method, status of payment,
+    payment date, delivery date, shipping cost, total cost of the order.
+    """
+
     STATUS = [('В работе', 'В работе'),
               ('Передан в службу доставки', 'Передан в службу доставки'),
               ('Доставлен', 'Доставлен'),
@@ -60,7 +75,7 @@ class Order(models.Model):
     delivery_date = models.DateTimeField(blank=True, null=True, verbose_name='Дата доставки')
     shipping_cost = models.DecimalField(max_digits=7, decimal_places=2, default=0, verbose_name='Цена доставки')
     total_cost = models.DecimalField(max_digits=7, decimal_places=2, default=0, verbose_name='Цена заказа с учетом доставки')
-    payment_method = models.CharField(default='PayPal', verbose_name='Способ оплаты')
+    payment_method = models.CharField(default='Card', verbose_name='Способ оплаты')
 
     class Meta:
         verbose_name = 'Заказ'
@@ -72,6 +87,10 @@ class Order(models.Model):
 
 
 class OrderedBook(models.Model):
+    """
+    Represents the book added to the order consisting ordered book, quantity of books, book price, order
+    """
+
     ord_book = models.ForeignKey(Book, on_delete=models.PROTECT, related_name='ordered_books')
     quantity = models.PositiveSmallIntegerField(verbose_name='Количество')
     price = models.DecimalField(max_digits=7, decimal_places=2, verbose_name='Цена')
@@ -88,6 +107,10 @@ class OrderedBook(models.Model):
 
 
 class DeliveryAddress(models.Model):
+    """
+    Represents a delivery address consisting order, address, phone number of customer
+    """
+
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='delivery_address', verbose_name='Номер заказа')
     address = models.TextField(max_length=250, verbose_name='Адрес заказа')
     phone_number_regex = RegexValidator(regex=r"^\+?1?\d{8,15}$")
@@ -103,6 +126,10 @@ class DeliveryAddress(models.Model):
 
 
 class Comments(models.Model):
+    """
+    Represents a user comment consisting commented book, book rating, comment author, comment, date of comment
+    """
+
     RATING_CHOICES = [(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)]
 
     book = models.ForeignKey(Book, related_name='book_comments', on_delete=models.CASCADE,
@@ -121,3 +148,4 @@ class Comments(models.Model):
 
     def __str__(self):
         return f'Комментарий {self.comment_author}'
+

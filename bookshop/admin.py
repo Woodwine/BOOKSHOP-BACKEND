@@ -3,11 +3,6 @@ from django.contrib import admin
 from .models import Publishing, Book, Order, Comments, DeliveryAddress, OrderedBook
 
 
-# @admin.register(Author)
-# class AuthorAdmin(admin.ModelAdmin):
-#     search_fields = ['surname']
-
-
 @admin.register(Publishing)
 class PublishingAdmin(admin.ModelAdmin):
     search_fields = ['name']
