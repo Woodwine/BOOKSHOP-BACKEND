@@ -11,8 +11,8 @@ from datetime import datetime
 from .models import Book, Publishing, Order, DeliveryAddress, OrderedBook, Comments
 from .serializers import PublishingDetailSerializer, BookListSerializer, BookDetailSerializer, \
     OrderDetailSerializer, OrderListSerializer, CommentCreateSerializer, MyTokenObtainPairSerializer, \
-    CustomerDetailSerializer, \
     CustomerSerializer, CustomerSerializerWithToken, BookCreateSerializer
+
 from .permissions import IsAdminUserOrReadOnly, IsOwner, IsOrderOwner, IsCommentOwner
 from .service import BookFilter
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -205,7 +205,22 @@ class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
 
 
-class UserProfileViewSet(ModelViewSet):
+class UserViewSet(ModelViewSet):
+    """
+    Represents list of all users or information about one user.
+    Be used also for updating user information by owner or staff
+    """
+
+    permission_classes = (IsAdminUser,)
+    filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
+    queryset = User.objects.all()
+    serializer_class = CustomerSerializer
+    # ordering_fields = ['username']
+
+
+class ProfileViewSet(mixins.RetrieveModelMixin,
+                     mixins.UpdateModelMixin,
+                     GenericViewSet):
     """
     Represents list of all users or information about one user.
     Be used also for updating user information by owner or staff
@@ -213,19 +228,10 @@ class UserProfileViewSet(ModelViewSet):
 
     permission_classes = (IsOwner,)
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
-    ordering_fields = ['username']
+    serializer_class = CustomerSerializerWithToken
+    # ordering_fields = ['username']
 
     def get_queryset(self):
-        if self.request.user.is_staff:
-            return User.objects.all()
-        elif self.request.user.is_authenticated:
+        if self.request.user.is_authenticated:
             return User.objects.filter(id=self.request.user.pk)
-
-    def get_serializer_class(self):
-        if self.action == 'list':
-            return CustomerSerializer
-        elif self.action in ['update', 'partial_update']:
-            return CustomerSerializerWithToken
-        elif self.request.user.is_authenticated:
-            return CustomerDetailSerializer
 
