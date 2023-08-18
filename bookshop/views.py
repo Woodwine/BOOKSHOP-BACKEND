@@ -212,10 +212,9 @@ class UserViewSet(ModelViewSet):
     """
 
     permission_classes = (IsAdminUser,)
-    filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend]
     queryset = User.objects.all()
     serializer_class = CustomerSerializer
-    # ordering_fields = ['username']
 
 
 class ProfileViewSet(mixins.RetrieveModelMixin,
@@ -227,9 +226,8 @@ class ProfileViewSet(mixins.RetrieveModelMixin,
     """
 
     permission_classes = (IsOwner,)
-    filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend]
     serializer_class = CustomerSerializerWithToken
-    # ordering_fields = ['username']
 
     def get_queryset(self):
         if self.request.user.is_authenticated:

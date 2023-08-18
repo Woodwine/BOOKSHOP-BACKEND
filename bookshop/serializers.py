@@ -175,7 +175,6 @@ class CustomerSerializerWithToken(CustomerSerializer):
     """
 
     token = serializers.SerializerMethodField(read_only=True)
-    # customer_orders = OrderListSerializer(many=True)
 
     class Meta:
         model = User
