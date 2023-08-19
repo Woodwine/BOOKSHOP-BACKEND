@@ -169,18 +169,6 @@ class OrderDetailSerializer(serializers.ModelSerializer):
                   'delivery_date', 'shipping_cost', 'total_cost', 'delivery_address', 'ord_books']
 
 
-class CustomerDetailSerializer(CustomerSerializer):
-    """
-    Returns information about the customer consisting customer id, username, email, staff status, customer orders
-    """
-
-    customer_orders = OrderListSerializer(many=True)
-
-    class Meta:
-        model = User
-        fields = ['id', 'username', 'email',  'is_admin', 'customer_orders']
-
-
 class CustomerSerializerWithToken(CustomerSerializer):
     """
     Returns information about the customer consisting customer id, username, email, staff status, JWT token
