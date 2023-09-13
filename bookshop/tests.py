@@ -198,7 +198,7 @@ class UserTests(APITestCase):
     def test_not_stuff_users_list(self):
         self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(self.user_test_token))
         response = self.client.get(reverse('users-list'))
-        self.assertEquals(response.status_code, status.HTTP_200_OK)
+        self.assertEquals(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEquals(len(response.data), 1)
 
     def test_stuff_users_list(self):
@@ -214,7 +214,7 @@ class UserTests(APITestCase):
 
     def test_own_user_detail(self):
         self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(self.user_test_token))
-        response = self.client.get(reverse('users-detail', kwargs={'pk': self.user_test.id}))
+        response = self.client.get(reverse('profile-detail', kwargs={'pk': self.user_test.id}))
         self.assertEquals(response.status_code, status.HTTP_200_OK)
 
     def test_staff_user_detail(self):
@@ -230,7 +230,7 @@ class UserTests(APITestCase):
 
     def test_change_user_detail(self):
         self.client.credentials(HTTP_AUTHORIZATION='JWT ' + str(self.user_test_token))
-        response = self.client.patch(reverse('users-detail', kwargs={'pk': self.user_test.id}), self.data)
+        response = self.client.patch(reverse('profile-detail', kwargs={'pk': self.user_test.id}), self.data)
         self.assertEquals(response.status_code, status.HTTP_200_OK)
 
 
